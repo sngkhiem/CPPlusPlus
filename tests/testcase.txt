@@ -1,0 +1,11 @@
+PRIME1 {
+    config {
+        test
+    }
+    generate {
+        test
+    }
+    checker {
+        test
+    }
+}
