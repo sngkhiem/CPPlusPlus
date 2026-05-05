@@ -5,7 +5,7 @@ import math
 class CodeRunner():
     def __init__(self, context=None):
         self.context = context
-        self.variables = context.python_variables() if context else {}
+        self.variables = context.variables if context else {}
 
     def visitProgram(self, ctx:Prog):
         return "\n".join([str(expr.accept(self)) for expr in ctx.expr])

@@ -1,7 +1,7 @@
 PRIME1 {
     config {
         input "input.cppp"
-        output "outpPut.cpp"
+        output "output.cpp"
     }
     generate {
         var int N;
@@ -12,8 +12,8 @@ PRIME1 {
     }
     checker {
         var int userAns = read_user();
-        var tree(N) solAns = read_ans();
+        var int solAns = read_ans();
         
-        assert(userAns == bruteAns, "WA");
+        assert(userAns == solAns, "WA");
     }
 }

@@ -12,9 +12,6 @@ class ContextBuildError(Exception):
 
 @dataclass
 class VariableRecord:
-    # Metadata plus the Python runtime value for one DSL variable.
-    # CodeRunner can read/write `value` directly, and use the remaining fields
-    # when generation depends on type, block ownership, options, or checker source.
     name: str
     varType: Type
     value: object
@@ -35,7 +32,7 @@ class VariableRecord:
 class RunnerContext:
     # Shared context produced before CodeRunner starts.
     # `variables` is the single source of truth:
-    #   context.variables["N"].value   -> Python value used by CodeRunner
+    #   context.variables["N"].value   -> current stored value
     #   context.variables["N"].varType -> DSL type metadata
     #   context.variables["N"].block   -> owning block: generate/checker
     input_file: str = ""
@@ -54,7 +51,3 @@ class RunnerContext:
             f"output_file={self.output_file}\n"
             f"variables:\n{variables}"
         )
-
-    def python_variables(self):
-        # Convenience view for CodeRunner logic that only needs Python values.
-        return {name: record.value for name, record in self.variables.items()}
