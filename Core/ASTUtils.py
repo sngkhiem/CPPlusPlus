@@ -56,7 +56,7 @@ class GraphType(Type):
     edges: Expr
 
     def __str__(self):
-        return f"GraphType({str(self.nodes), {str(self.edges)}})"
+        return f"GraphType({str(self.nodes), str(self.edges)})"
     def accept(self, v):
         return v.visitGraphType(self)
     
@@ -100,13 +100,13 @@ class BinOp(Expr):
 class Var(Stmt):
     varType: Type
     name: str
-    dims: List[Expr] = field(default_factory=list) 
+    arraySizes: List[Expr] = field(default_factory=list)
     options: List[str] = field(default_factory=list)
 
     def __str__(self):
-        dimsStr = printlist(self.dims) if self.dims else "[]"
+        arraySizesStr = printlist(self.arraySizes) if self.arraySizes else "[]"
         optionsStr = printlist(self.options) if self.options else "[]"
-        return f"Var({str(self.varType)}, {self.name}, dims={dimsStr}, options={optionsStr})"
+        return f"Var({str(self.varType)}, {self.name}, arraySizes={arraySizesStr}, options={optionsStr})"
     def accept(self, v): 
         return v.visitVar(self)
     
@@ -154,7 +154,7 @@ class Config(AST):
     def __str__(self): 
         return f"Config(in={self.input}, out={self.output})"
     def accept(self, v): 
-        return v.visitConfig(self)
+        return v.visitConfigBlock(self)
     
 @dataclass
 class Generate(AST):
@@ -162,7 +162,7 @@ class Generate(AST):
     def __str__(self): 
         return f"Generate({printlist(self.stmts)})"
     def accept(self, v, param=None): 
-        return v.visitGenerate(self)
+        return v.visitGenBlock(self)
 
 @dataclass
 class Checker(AST):
@@ -170,7 +170,7 @@ class Checker(AST):
     def __str__(self): 
         return f"Checker({printlist(self.stmts)})"
     def accept(self, v): 
-        return v.visitChecker(self)
+        return v.visitCheckerBlock(self)
     
 @dataclass
 class Subtask(AST):
@@ -182,7 +182,7 @@ class Subtask(AST):
         checkerStr = str(self.checker) if self.checker else "None"
         return f"Subtask({self.name}, {str(self.config)}, {str(self.generate)}, {checkerStr})"
     def accept(self, v): 
-        return v.visitSubtask(self)
+        return v.visitSubtaskBlock(self)
 
 @dataclass
 class Prog(AST):

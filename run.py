@@ -26,9 +26,9 @@ def generateAntlr2Python():
     subprocess.run(['java', '-jar', ANTLR_JAR, '-o', CPL_Dest, '-no-listener', '-visitor','-Dlanguage=Python3', SRC])
     print('Generate successfully')
 
-def runCode(astTree):    
-    from CodeRunner import CodeRunner
-    code_runner = CodeRunner()
+def runCode(astTree, context=None):    
+    from Core.CodeRunner import CodeRunner
+    code_runner = CodeRunner(context)
     result = astTree.accept(code_runner)
     
     print("Result:", result)
@@ -72,16 +72,29 @@ def runTest():
     stream = CommonTokenStream(lexer)
     parser = CPPPParser(stream)
     tree = parser.program()  
-    print('Parser tree: ', tree.toStringTree(recog=parser)) 
+    #print('Parser tree: ', tree.toStringTree(recog=parser)) 
     
 
-    from ASTGeneration import ASTGeneration
+    from Core.ASTGeneration import ASTGeneration
     ast_generator = ASTGeneration()
 
     asttree = tree.accept(ast_generator)    
-    print('This is ast string: ', asttree)
-    
-    # runCode(asttree)
+    #print('This is ast string: ', asttree)
+
+    from Core.ContextGeneration import ContextGeneration
+    from Core.ContextUtils import ContextBuildError
+
+    context_generation = ContextGeneration(DIR)
+    try:
+        context = context_generation.build(asttree)
+        print('Context check passed')
+        print(context)
+    except ContextBuildError as err:
+        print('Context check failed')
+        for message in err.errors:
+            print('- ' + message)
+        return
+    # runCode(asttree, context)
     
 
 def main(argv):
