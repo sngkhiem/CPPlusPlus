@@ -24,18 +24,30 @@ class ASTGeneration(CPPPVisitor):
         sol = None
         testSol = None
 
-        for i in range(ctx.getChildCount()):
-            node = ctx.getChild(i).getText()
-            if node == 'input':
-                input = ctx.getChild(i+1).getText()
-            elif node == 'output':
-                output = ctx.getChild(i+1).getText()
-            elif node == 'tests':
-                tests = int(ctx.getChild(i+1).getText())
-            elif node == 'sol':
-                sol = ctx.getChild(i+1).getText()
-            elif node == 'test_sol':
-                testSol = ctx.getChild(i+1).getText()
+        #for i in range(ctx.getChildCount()):
+        #    node = ctx.getChild(i).getText()
+        #    if node == 'input':
+        #        input = ctx.getChild(i+1).getText()
+        #    elif node == 'output':
+        #        output = ctx.getChild(i+1).getText()
+        #    elif node == 'tests':
+        #        tests = int(ctx.getChild(i+1).getText())
+        #    elif node == 'sol':
+        #        sol = ctx.getChild(i+1).getText()
+        #    elif node == 'test_sol':
+        #        testSol = ctx.getChild(i+1).getText()
+
+        for item in ctx.configItem():
+            if item.INPUT():
+                input = item.STR().getText()
+            elif item.OUTPUT():
+                output = item.STR().getText()
+            elif item.TESTS():
+                tests = int(item.NUMBER().getText())
+            elif item.SOL():
+                sol = item.STR().getText()
+            elif item.TEST_SOL():
+                testSol = item.STR().getText()
         
         return Config(input, output, tests, sol, testSol)
     

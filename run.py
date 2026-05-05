@@ -27,11 +27,9 @@ def generateAntlr2Python():
     print('Generate successfully')
 
 def runCode(astTree, context=None):    
-    from Core.CodeRunner import CodeRunner
-    code_runner = CodeRunner(context)
-    result = astTree.accept(code_runner)
-    
-    print("Result:", result)
+    from semantic.CodeRunner import CodeRunner
+    code_runner = CodeRunner()
+    astTree.accept(code_runner)
 
 
 def runTest():
@@ -77,12 +75,15 @@ def runTest():
     from semantic.varCheck import varCheck, varError
     ast_generator = ASTGeneration()
     asttree = tree.accept(ast_generator) 
+    #print('this is asttree:', asttree)
     check = varCheck()
     try:
         check.check(asttree)
     except varError as e:
         print(e)
-        exit(1)    
+        exit(1)   
+
+    runCode(asttree) 
 
 def main(argv):
     print('Complete jar file ANTLR  :  ' + str(ANTLR_JAR))
