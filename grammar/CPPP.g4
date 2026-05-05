@@ -5,16 +5,28 @@ program: subtaskBlock+ EOF;
 subtaskBlock: subtaskName '{' configBlock genBlock checkerBlock? '}';
 
 subtaskName: ID+;
-configBlock: 'config' '{' (INPUT CPP_FILE OUTPUT CPP_FILE | (OUTPUT CPP_FILE INPUT CPP_FILE)) '}';
+configBlock: 'config' '{' (INPUT STR OUTPUT STR | (OUTPUT STR INPUT STR)) '}';
 genBlock: 'generate' '{' func+ '}';
-checkerBlock: 'checker' '{' ID+ '}'; 
+checkerBlock: 'checker' '{' check* '}'; 
+
 primitiveType:  INT | FLOAT | DOUBLE | LL | CHAR | STRTYPE;
-dataType: primitiveType | ARRAY '<' dataType '>' | TREE '(' NUMBER ')' | GRAPH '(' NUMBER ',' NUMBER ')';
-func: var | printStmt;
+dataType: primitiveType | ARRAY '<' dataType '>' | TREE '(' expr ')' | GRAPH '(' expr ',' expr ')';
+
+func: var | printStmt | loopStmt;
 var: VAR dataType ID  ('[' expr ']')* option* ';';
-expr: ID | NUMBER | STR;
-printStmt: PRINT ID*;
-option: ID+;
+
+printStmt: PRINT expr+ ';';
+loopStmt: 'repeat' '(' expr ')' '{' func* '}';
+
+check: 'assert' '(' expr (',' STR)? ')' ';' | 'var' dataType ID '=' checkRead ';';
+checkRead: 'read_user()' | 'read_ans()' ;
+
+option: ID;
+
+expr: '(' expr ')' | expr ('*' | '/' | '%') expr | expr ('+' | '-') expr 
+                   | expr ('>' | '<' | '>=' | '<=' | '==' | '!=') expr 
+                   | expr ('&&' | '||') expr
+                   | ID | NUMBER | STR;
 
 INT: 'int';
 FLOAT: 'float';
@@ -29,7 +41,6 @@ TREE: 'tree';
 GRAPH: 'graph';
 INPUT: 'input';
 OUTPUT: 'output';
-CPP_FILE: '"' (~["\\\r\n] | '\\' .)* '.cpp"';
 NUMBER: [0-9]+;
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 STR: '"' (~["\\] | '\\' .)* '"';

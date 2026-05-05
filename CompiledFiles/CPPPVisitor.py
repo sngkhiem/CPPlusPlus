@@ -59,18 +59,33 @@ class CPPPVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CPPPParser#expr.
-    def visitExpr(self, ctx:CPPPParser.ExprContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by CPPPParser#printStmt.
     def visitPrintStmt(self, ctx:CPPPParser.PrintStmtContext):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by CPPPParser#loopStmt.
+    def visitLoopStmt(self, ctx:CPPPParser.LoopStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CPPPParser#check.
+    def visitCheck(self, ctx:CPPPParser.CheckContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CPPPParser#checkRead.
+    def visitCheckRead(self, ctx:CPPPParser.CheckReadContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by CPPPParser#option.
     def visitOption(self, ctx:CPPPParser.OptionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CPPPParser#expr.
+    def visitExpr(self, ctx:CPPPParser.ExprContext):
         return self.visitChildren(ctx)
 
 

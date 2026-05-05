@@ -75,11 +75,11 @@ def runTest():
     print('Parser tree: ', tree.toStringTree(recog=parser)) 
     
 
-    # from ASTGeneration import ASTGeneration
-    # ast_generator = ASTGeneration()
+    from ASTGeneration import ASTGeneration
+    ast_generator = ASTGeneration()
 
-    # asttree = tree.accept(ast_generator)    
-    # print('This is ast string: ', asttree)
+    asttree = tree.accept(ast_generator)    
+    print('This is ast string: ', asttree)
     
     # runCode(asttree)
     

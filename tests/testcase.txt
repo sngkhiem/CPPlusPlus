@@ -1,11 +1,19 @@
 PRIME1 {
     config {
-        test
+        input "input.txt"
+        output "output.txt"
     }
     generate {
-        test
+        var int N;
+        print N;
+        
+        var array<int> A[N] distinct;
+        print A;
     }
     checker {
-        test
+        var int userAns = read_user();
+        var int solAns = read_ans();
+        
+        assert(userAns == bruteAns, "WA");
     }
 }
