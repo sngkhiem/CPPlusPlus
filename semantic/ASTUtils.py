@@ -152,8 +152,10 @@ class Config(AST):
     input: str
     output: str
     tests: int
+    sol: Optional[str] = None
+    testSol: Optional[str] = None
     def __str__(self): 
-        return f"Config(in={self.input}, out={self.output}, tests={self.tests})"
+        return f"Config(in={self.input}, out={self.output}, tests={self.tests}, sol={self.sol}, test_sol={self.testSol})"
     def accept(self, v): 
         return v.visitConfig(self)
     
@@ -167,10 +169,9 @@ class Generate(AST):
 
 @dataclass
 class Checker(AST):
-    solution: Optional[str]
     stmts: List[check]
     def __str__(self): 
-        return f"Checker(solution={self.solution}, {printlist(self.stmts)})"
+        return f"Checker({printlist(self.stmts)})"
     def accept(self, v): 
         return v.visitChecker(self)
     

@@ -6,9 +6,9 @@ subtaskBlock: subtaskName '{' configBlock genBlock checkerBlock? '}';
 
 subtaskName: ID+;
 configBlock: 'config' '{' configItem+ '}';
-configItem: INPUT STR | OUTPUT STR | TESTS NUMBER;
+configItem: INPUT STR | OUTPUT STR | TESTS NUMBER | SOL STR | TEST_SOL STR;
 genBlock: 'generate' '{' func+ '}';
-checkerBlock: 'checker' '{' (SOLUTION STR ';' | check)* '}'; 
+checkerBlock: 'checker' '{' check* '}'; 
 
 primitiveType:  INT | FLOAT | DOUBLE | LL | CHAR | STRTYPE;
 dataType: primitiveType | ARRAY '<' dataType '>' | TREE '(' expr ')' | GRAPH '(' expr ',' expr ')';
@@ -43,7 +43,8 @@ GRAPH: 'graph';
 INPUT: 'input';
 OUTPUT: 'output';
 TESTS: 'tests';
-SOLUTION: 'solution';
+TEST_SOL: 'test_sol';
+SOL: 'sol';
 NUMBER: [0-9]+;
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 STR: '"' (~["\\] | '\\' .)* '"';

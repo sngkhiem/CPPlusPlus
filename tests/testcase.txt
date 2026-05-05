@@ -3,6 +3,8 @@ PRIME1 {
         input "input.txt"
         output "output.txt"
         tests 10
+        sol "sol.cpp"
+        test_sol "wrong.cpp"
     }
     generate {
         var int N;
@@ -12,8 +14,6 @@ PRIME1 {
         print A;
     }
     checker {
-        solution "sol.cpp";
-
         var int userAns = read_user();
         var int solAns = read_ans();
         

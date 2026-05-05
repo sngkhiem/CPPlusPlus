@@ -21,6 +21,8 @@ class ASTGeneration(CPPPVisitor):
         input = ""
         output = ""
         tests = 1
+        sol = None
+        testSol = None
 
         for i in range(ctx.getChildCount()):
             node = ctx.getChild(i).getText()
@@ -30,23 +32,20 @@ class ASTGeneration(CPPPVisitor):
                 output = ctx.getChild(i+1).getText()
             elif node == 'tests':
                 tests = int(ctx.getChild(i+1).getText())
+            elif node == 'sol':
+                sol = ctx.getChild(i+1).getText()
+            elif node == 'test_sol':
+                testSol = ctx.getChild(i+1).getText()
         
-        return Config(input, output, tests)
+        return Config(input, output, tests, sol, testSol)
     
     def visitGenBlock(self, ctx:CPPPParser.GenBlockContext):
         stmts = [func.accept(self) for func in ctx.func()]
         return Generate(stmts)
     
     def visitCheckerBlock(self, ctx: CPPPParser.CheckerBlockContext):
-        solution = None
         checks = [check.accept(self) for check in ctx.check()]
-
-        for i in range(ctx.getChildCount()):
-            node = ctx.getChild(i).getText()
-            if node == 'solution':
-                solution = ctx.getChild(i+1).getText()
-
-        return Checker(solution, checks)
+        return Checker(checks)
     
     def visitDataType(self, ctx: CPPPParser.DataTypeContext):
         if ctx.primitiveType():
