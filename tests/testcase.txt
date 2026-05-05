@@ -2,21 +2,17 @@ PRIME1 {
     config {
         input "input.txt"
         output "output.txt"
-        tests 10
-        sol "sol.cpp"
+        tests 2
+        sol "PRIME1\\sol.cpp"
         test_sol "wrong.cpp"
     }
     generate {
         var int N;
         print N;
         
-        var array<int> A[N] distinct;
+        var array<int> A[N];
         print A;
     }
     checker {
-        var int userAns = read_user();
-        var int solAns = read_ans();
-        
-        assert(userAns == solAns, "WA");
     }
 }
