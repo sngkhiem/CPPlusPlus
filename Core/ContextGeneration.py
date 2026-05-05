@@ -13,12 +13,6 @@ class ContextGeneration(GenerationVisitorInterface):
         "tree": [],
         "graph": [],
     }
-    CONFLICT_OPTIONS_BY_TYPE = {
-        "primitive": [],
-        "array": [],
-        "tree": [],
-        "graph": [],
-    }
 
     def __init__(self, base_dir: Optional[str] = None):
         self.base_dir = base_dir or os.getcwd()
@@ -40,31 +34,21 @@ class ContextGeneration(GenerationVisitorInterface):
         return self.context
 
     def visitProgram(self, node: Prog):
-        seen_subtasks = set()
-        for subtask in node.subtasks:
-            if subtask.name in seen_subtasks:
-                self._error(f"duplicate subtask '{subtask.name}'")
-                continue
-            seen_subtasks.add(subtask.name)
-            subtask.accept(self)
+        self._check_unique_subtask_names(node.subtasks)
+        subtasks = [subtask.accept(self) for subtask in node.subtasks]
         return self.context
 
     def visitSubtaskBlock(self, node: Subtask):
-        previous_subtask = self.current_subtask
-        previous_block = self.current_block
-
-        self.current_subtask = self.visitSubtaskName(node.name)
-        node.config.accept(self)
-
-        self.current_block = "generate"
-        node.generate.accept(self)
-
+        name = self.visitSubtaskName(node.name)
+        self.current_subtask = name
+        config = node.config.accept(self)
+        gen = self._visitBlock("generate", node.generate)
         if node.checker:
-            self.current_block = "checker"
-            node.checker.accept(self)
-
-        self.current_subtask = previous_subtask
-        self.current_block = previous_block
+            checker = self._visitBlock("checker", node.checker)
+        else:
+            checker = None
+        self.current_subtask = ""
+        return Subtask(name, config, gen, checker)
 
     def visitSubtaskName(self, node: str):
         if not node:
@@ -85,14 +69,15 @@ class ContextGeneration(GenerationVisitorInterface):
 
         self.context.input_file = input_file
         self.context.output_file = output_file
+        return Config(input_file, output_file)
 
     def visitGenBlock(self, node: Generate):
-        for stmt in node.stmts:
-            self.visitFunc(stmt)
+        stmts = [self.visitFunc(stmt) for stmt in node.stmts]
+        return Generate(stmts)
 
     def visitCheckerBlock(self, node: Checker):
-        for stmt in node.stmts:
-            self.visitCheck(stmt)
+        checks = [self.visitCheck(stmt) for stmt in node.stmts]
+        return Checker(checks)
 
     def visitFunc(self, node: Stmt):
         return node.accept(self)
@@ -197,6 +182,20 @@ class ContextGeneration(GenerationVisitorInterface):
         self.visitExpr(node.left)
         self.visitExpr(node.right)
 
+    def _check_unique_subtask_names(self, subtasks):
+        seen_subtasks = set()
+        for subtask in subtasks:
+            if subtask.name in seen_subtasks:
+                self._error(f"duplicate subtask '{subtask.name}'")
+            seen_subtasks.add(subtask.name)
+
+    def _visitBlock(self, block_name: str, node):
+        previous_block = self.current_block
+        self.current_block = block_name
+        result = node.accept(self)
+        self.current_block = previous_block
+        return result
+
     def _declare(self, record: VariableRecord):
         if record.name in self.context.variables:
             previous = self.context.variables[record.name]
@@ -215,17 +214,14 @@ class ContextGeneration(GenerationVisitorInterface):
 
     def _check_options(self, node: Var):
         valid_options = self._valid_options(node)
+        if len(node.options) > 1:
+            self._error(f"variable '{node.name}' can only have one option")
+            return
+
         for option in node.options:
             checked_option = self.visitOption(option)
             if checked_option not in valid_options:
                 self._error(f"invalid option '{checked_option}' for variable '{node.name}'")
-
-        option_set = set(node.options)
-        for conflict in self._conflict_options(node):
-            used_options = option_set.intersection(conflict)
-            if len(used_options) > 1:
-                names = ", ".join(sorted(used_options))
-                self._error(f"conflicting options for variable '{node.name}': {names}")
 
     def _valid_options(self, node: Var):
         return set(self.VALID_OPTIONS_BY_TYPE.get(self._type_kind(node.varType), []))
@@ -234,9 +230,6 @@ class ContextGeneration(GenerationVisitorInterface):
         if not node:
             self._error("option cannot be empty")
         return node
-
-    def _conflict_options(self, node: Var):
-        return self.CONFLICT_OPTIONS_BY_TYPE.get(self._type_kind(node.varType), [])
 
     def _type_kind(self, var_type: Type):
         if isinstance(var_type, ArrayType):
