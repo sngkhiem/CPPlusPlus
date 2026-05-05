@@ -1,16 +1,14 @@
 from CompiledFiles.CPPPVisitor import CPPPVisitor
 from CompiledFiles.CPPPParser import CPPPParser
-from .ASTUtils import *
-from .GenerationVisitorInterface import GenerationVisitorInterface
+from semantic.ASTUtils import *
 
-
-class ASTGeneration(CPPPVisitor, GenerationVisitorInterface):
+class ASTGeneration(CPPPVisitor):
     def visitProgram(self, ctx:CPPPParser.ProgramContext):
         subtasks = [subtask.accept(self) for subtask in ctx.subtaskBlock()]
         return Prog(subtasks)
     
     def visitSubtaskBlock(self, ctx:CPPPParser.SubtaskBlockContext):
-        name = ctx.subtaskName().accept(self)
+        name = ctx.subtaskName().getText()
         config = ctx.configBlock().accept(self)
         gen = ctx.genBlock().accept(self)
         if ctx.checkerBlock():
@@ -18,10 +16,11 @@ class ASTGeneration(CPPPVisitor, GenerationVisitorInterface):
         else:
             checker = None
         return Subtask(name, config, gen, checker)
-
+    
     def visitConfigBlock(self, ctx:CPPPParser.ConfigBlockContext):
         input = ""
         output = ""
+        tests = 1
 
         for i in range(ctx.getChildCount()):
             node = ctx.getChild(i).getText()
@@ -29,20 +28,29 @@ class ASTGeneration(CPPPVisitor, GenerationVisitorInterface):
                 input = ctx.getChild(i+1).getText()
             elif node == 'output':
                 output = ctx.getChild(i+1).getText()
+            elif node == 'tests':
+                tests = int(ctx.getChild(i+1).getText())
         
-        return Config(input, output)
+        return Config(input, output, tests)
     
     def visitGenBlock(self, ctx:CPPPParser.GenBlockContext):
         stmts = [func.accept(self) for func in ctx.func()]
         return Generate(stmts)
     
     def visitCheckerBlock(self, ctx: CPPPParser.CheckerBlockContext):
+        solution = None
         checks = [check.accept(self) for check in ctx.check()]
-        return Checker(checks)
+
+        for i in range(ctx.getChildCount()):
+            node = ctx.getChild(i).getText()
+            if node == 'solution':
+                solution = ctx.getChild(i+1).getText()
+
+        return Checker(solution, checks)
     
     def visitDataType(self, ctx: CPPPParser.DataTypeContext):
         if ctx.primitiveType():
-            return ctx.primitiveType().accept(self)
+            return PrimitiveType(ctx.primitiveType().getText())
         elif ctx.ARRAY():
             inner = ctx.dataType().accept(self)
             return ArrayType(inner)
@@ -53,16 +61,16 @@ class ASTGeneration(CPPPVisitor, GenerationVisitorInterface):
             nodes = ctx.expr(0).accept(self)
             edges = ctx.expr(1).accept(self)
             return GraphType(nodes, edges)
-
+    
     def visitFunc(self, ctx: CPPPParser.FuncContext):
         return ctx.getChild(0).accept(self)
 
     def visitVar(self, ctx: CPPPParser.VarContext):
         varType = ctx.dataType().accept(self)
         name = ctx.ID().getText()
-        arraySizes = [expr.accept(self) for expr in ctx.expr()]
-        options = [opt.accept(self) for opt in ctx.option()]
-        return Var(varType, name, arraySizes, options)
+        dims = [expr.accept(self) for expr in ctx.expr()]
+        options = [opt.getText() for opt in ctx.option()]
+        return Var(varType, name, dims, options)
     
     def visitPrintStmt(self, ctx: CPPPParser.PrintStmtContext):
         exprs = [expr.accept(self) for expr in ctx.expr()]
@@ -86,9 +94,9 @@ class ASTGeneration(CPPPVisitor, GenerationVisitorInterface):
         elif firstChild == 'var':
             varType = ctx.dataType().accept(self)
             name = ctx.ID().getText()
-            source = ctx.checkRead().accept(self)
+            source = ctx.checkRead().getText()
             return CheckRead(varType, name, source)
-
+        
     def visitExpr(self, ctx: CPPPParser.ExprContext):
         if ctx.getChildCount() == 1:
             if ctx.NUMBER():
@@ -106,16 +114,4 @@ class ASTGeneration(CPPPVisitor, GenerationVisitorInterface):
                 left = ctx.expr(0).accept(self)
                 right = ctx.expr(1).accept(self)
                 return BinOp(op, left, right)
-
-    def visitSubtaskName(self, ctx: CPPPParser.SubtaskNameContext):
-        return ctx.getText()
-
-    def visitPrimitiveType(self, ctx: CPPPParser.PrimitiveTypeContext):
-        return PrimitiveType(ctx.getText())
-
-    def visitCheckRead(self, ctx: CPPPParser.CheckReadContext):
-        return ctx.getText()
-
-    def visitOption(self, ctx: CPPPParser.OptionContext):
-        return ctx.ID().getText()
-
+    

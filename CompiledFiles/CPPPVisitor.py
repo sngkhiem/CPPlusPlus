@@ -29,6 +29,11 @@ class CPPPVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by CPPPParser#configItem.
+    def visitConfigItem(self, ctx:CPPPParser.ConfigItemContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by CPPPParser#genBlock.
     def visitGenBlock(self, ctx:CPPPParser.GenBlockContext):
         return self.visitChildren(ctx)

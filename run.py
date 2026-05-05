@@ -35,7 +35,7 @@ def runCode(astTree, context=None):
 
 
 def runTest():
-    print('Running testcases...')
+    #print('Running testcases...')
        
     from CompiledFiles.CPPPLexer import CPPPLexer
     from CompiledFiles.CPPPParser import CPPPParser
@@ -63,9 +63,7 @@ def runTest():
         pass
     
     printBreak()
-    print('Run tests completely')
-    
-    
+    #print('Run tests completely')
     
     input_stream = FileStream(inputFile)
     lexer = CPPPLexer(input_stream)
@@ -75,27 +73,16 @@ def runTest():
     #print('Parser tree: ', tree.toStringTree(recog=parser)) 
     
 
-    from Core.ASTGeneration import ASTGeneration
+    from semantic.ASTGeneration import ASTGeneration
+    from semantic.varCheck import varCheck, varError
     ast_generator = ASTGeneration()
-
-    asttree = tree.accept(ast_generator)    
-    #print('This is ast string: ', asttree)
-
-    from Core.ContextGeneration import ContextGeneration
-    from Core.ContextUtils import ContextBuildError
-
-    context_generation = ContextGeneration(DIR)
+    asttree = tree.accept(ast_generator) 
+    check = varCheck()
     try:
-        context = context_generation.build(asttree)
-        print('Context check passed')
-        print(context)
-    except ContextBuildError as err:
-        print('Context check failed')
-        for message in err.errors:
-            print('- ' + message)
-        return
-    # runCode(asttree, context)
-    
+        check.check(asttree)
+    except varError as e:
+        print(e)
+        exit(1)    
 
 def main(argv):
     print('Complete jar file ANTLR  :  ' + str(ANTLR_JAR))

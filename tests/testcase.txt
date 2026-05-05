@@ -1,7 +1,8 @@
 PRIME1 {
     config {
-        input "input.cppp"
-        output "output.cpp"
+        input "input.txt"
+        output "output.txt"
+        tests 10
     }
     generate {
         var int N;
@@ -11,6 +12,8 @@ PRIME1 {
         print A;
     }
     checker {
+        solution "sol.cpp";
+
         var int userAns = read_user();
         var int solAns = read_ans();
         

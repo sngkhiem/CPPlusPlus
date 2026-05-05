@@ -5,9 +5,10 @@ program: subtaskBlock+ EOF;
 subtaskBlock: subtaskName '{' configBlock genBlock checkerBlock? '}';
 
 subtaskName: ID+;
-configBlock: 'config' '{' (INPUT STR OUTPUT STR | (OUTPUT STR INPUT STR)) '}';
+configBlock: 'config' '{' configItem+ '}';
+configItem: INPUT STR | OUTPUT STR | TESTS NUMBER;
 genBlock: 'generate' '{' func+ '}';
-checkerBlock: 'checker' '{' check* '}'; 
+checkerBlock: 'checker' '{' (SOLUTION STR ';' | check)* '}'; 
 
 primitiveType:  INT | FLOAT | DOUBLE | LL | CHAR | STRTYPE;
 dataType: primitiveType | ARRAY '<' dataType '>' | TREE '(' expr ')' | GRAPH '(' expr ',' expr ')';
@@ -41,6 +42,8 @@ TREE: 'tree';
 GRAPH: 'graph';
 INPUT: 'input';
 OUTPUT: 'output';
+TESTS: 'tests';
+SOLUTION: 'solution';
 NUMBER: [0-9]+;
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 STR: '"' (~["\\] | '\\' .)* '"';

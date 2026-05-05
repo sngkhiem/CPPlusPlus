@@ -56,7 +56,7 @@ class GraphType(Type):
     edges: Expr
 
     def __str__(self):
-        return f"GraphType({str(self.nodes), str(self.edges)})"
+        return f"GraphType({str(self.nodes), {str(self.edges)}})"
     def accept(self, v):
         return v.visitGraphType(self)
     
@@ -100,13 +100,13 @@ class BinOp(Expr):
 class Var(Stmt):
     varType: Type
     name: str
-    arraySizes: List[Expr] = field(default_factory=list)
+    dims: List[Expr] = field(default_factory=list) 
     options: List[str] = field(default_factory=list)
 
     def __str__(self):
-        arraySizesStr = printlist(self.arraySizes) if self.arraySizes else "[]"
+        dimsStr = printlist(self.dims) if self.dims else "[]"
         optionsStr = printlist(self.options) if self.options else "[]"
-        return f"Var({str(self.varType)}, {self.name}, arraySizes={arraySizesStr}, options={optionsStr})"
+        return f"Var({str(self.varType)}, {self.name}, dims={dimsStr}, options={optionsStr})"
     def accept(self, v): 
         return v.visitVar(self)
     
@@ -151,26 +151,28 @@ class CheckRead(check):
 class Config(AST):
     input: str
     output: str
+    tests: int
     def __str__(self): 
-        return f"Config(in={self.input}, out={self.output})"
+        return f"Config(in={self.input}, out={self.output}, tests={self.tests})"
     def accept(self, v): 
-        return v.visitConfigBlock(self)
+        return v.visitConfig(self)
     
 @dataclass
 class Generate(AST):
     stmts: List[Stmt]
     def __str__(self): 
         return f"Generate({printlist(self.stmts)})"
-    def accept(self, v, param=None): 
-        return v.visitGenBlock(self)
+    def accept(self, v): 
+        return v.visitGenerate(self)
 
 @dataclass
 class Checker(AST):
+    solution: Optional[str]
     stmts: List[check]
     def __str__(self): 
-        return f"Checker({printlist(self.stmts)})"
+        return f"Checker(solution={self.solution}, {printlist(self.stmts)})"
     def accept(self, v): 
-        return v.visitCheckerBlock(self)
+        return v.visitChecker(self)
     
 @dataclass
 class Subtask(AST):
@@ -182,7 +184,7 @@ class Subtask(AST):
         checkerStr = str(self.checker) if self.checker else "None"
         return f"Subtask({self.name}, {str(self.config)}, {str(self.generate)}, {checkerStr})"
     def accept(self, v): 
-        return v.visitSubtaskBlock(self)
+        return v.visitSubtask(self)
 
 @dataclass
 class Prog(AST):
