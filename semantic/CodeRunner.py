@@ -31,6 +31,8 @@ class CodeRunner():
         cpp = [
             "#include <bits/stdc++.h>",
             "using namespace std;",
+            "mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());",
+            "long long ran(long long l, long long r) {return l + (rng() % (r - l + 1));}",
             "int main() {",
             *self.writeCpp,
             "return 0;",
@@ -68,12 +70,12 @@ class CodeRunner():
         self.varsType[ctx.name] = ctx.varType
         if isinstance(ctx.varType, PrimitiveType):
             if ctx.varType.name == 'int':
-                self.writeCpp.append(f"int {ctx.name} = rand() % 21;")
+                self.writeCpp.append(f"int {ctx.name} = ran(1, 20);")
 
         elif isinstance(ctx.varType, ArrayType):
             dim = ctx.dims[0].accept(self)
             self.writeCpp.append(f"vector<int> {ctx.name};")
-            self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {ctx.name}.push_back(rand() % 21);")
+            self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {ctx.name}.push_back(ran(1, 20));")
 
 
     def visitPrintStmt(self, ctx: Print):
@@ -82,15 +84,14 @@ class CodeRunner():
             type = self.varsType[name]
 
             if isinstance(type, ArrayType):
-                name = expr.name
                 self.writeCpp.append(
-                    f'for (int i = 0; i < {name}.size(); i++) '
-                    f'{{cout << {name}[i] << " "; }}'
+                    f'for (int i = 0; i < {expr.name}.size(); i++) '
+                    f'{{cout << {expr.name}[i] << " "; }}'
                 )
-                self.writeCpp.append('cout << "\\n";')
-            
-            if isinstance(type, PrimitiveType):
+                self.writeCpp.append('cout << endl;')
+            else:
                 self.writeCpp.append(f'cout << {expr.name} << endl;')
+
 
     def visitId(self, ctx: Id):
         return ctx.name
