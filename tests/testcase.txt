@@ -1,35 +1,22 @@
 PRIME1 {
     config {
-        input "input.txt"
-        output "output.txt"
-        tests 2
+        input "PRIME1.inp"
+        output "PRIME1.out"
+        tests 1
         sol "tests\\sol.cpp" 
         test_sol "tests\\test_sol.cpp"
     }
     generate {
-        var int N;
-        print N;
-        
-        var array<int> A[N];
-        print A;
-    }
-    checker {
-    }
-}
-PRIME2 {
-    config {
-        input "input.txt"
-        output "output.txt"
-        tests 2
-        sol "tests\\sol.cpp"
-        test_sol "tests\\test_sol.cpp"
-    }
-    generate {
-        var int N;
-        print N;
-        
-        var array<int> A[N];
-        print A;
+        var int t range(1, 5);
+        print t;
+
+        repeat(t) {
+            var int n range(1, 100000);
+            print n;
+
+            var array<int> a[n] range(1, 1000000000);
+            print a;
+        }
     }
     checker {
     }

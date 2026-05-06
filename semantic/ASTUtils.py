@@ -74,7 +74,7 @@ class Int(Expr):
     def __str__(self): 
         return f"Int({self.value})"
     def accept(self, v): 
-        return v.visitIntLit(self)
+        return v.visitInt(self)
 
 @dataclass
 class Str(Expr):
@@ -82,7 +82,7 @@ class Str(Expr):
     def __str__(self): 
         return f"Str({self.value})"
     def accept(self, v): 
-        return v.visitStrLit(self)
+        return v.visitStr(self)
 
 @dataclass
 class BinOp(Expr):

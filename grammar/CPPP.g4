@@ -22,9 +22,9 @@ loopStmt: 'repeat' '(' expr ')' '{' func* '}';
 check: 'assert' '(' expr (',' STR)? ')' ';' | 'var' dataType ID '=' checkRead ';';
 checkRead: 'read_user()' | 'read_ans()' ;
 
-option: ID;
+option: ID | RANGE '(' expr ',' expr ')';
 
-expr: '(' expr ')' | expr ('*' | '/' | '%') expr | expr ('+' | '-') expr 
+expr: '-' expr | '(' expr ')' | expr ('*' | '/' | '%') expr | expr ('+' | '-') expr 
                    | expr ('>' | '<' | '>=' | '<=' | '==' | '!=') expr 
                    | expr ('&&' | '||') expr
                    | ID | NUMBER | STR;
@@ -45,6 +45,7 @@ OUTPUT: 'output';
 TESTS: 'tests';
 TEST_SOL: 'test_sol';
 SOL: 'sol';
+RANGE: 'range';
 NUMBER: [0-9]+;
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 STR: '"' (~["\\] | '\\' .)* '"';

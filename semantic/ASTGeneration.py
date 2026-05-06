@@ -24,19 +24,6 @@ class ASTGeneration(CPPPVisitor):
         sol = None
         testSol = None
 
-        #for i in range(ctx.getChildCount()):
-        #    node = ctx.getChild(i).getText()
-        #    if node == 'input':
-        #        input = ctx.getChild(i+1).getText()
-        #    elif node == 'output':
-        #        output = ctx.getChild(i+1).getText()
-        #    elif node == 'tests':
-        #        tests = int(ctx.getChild(i+1).getText())
-        #    elif node == 'sol':
-        #        sol = ctx.getChild(i+1).getText()
-        #    elif node == 'test_sol':
-        #        testSol = ctx.getChild(i+1).getText()
-
         for item in ctx.configItem():
             if item.INPUT():
                 input = item.STR().getText()
@@ -116,6 +103,10 @@ class ASTGeneration(CPPPVisitor):
                 return Str(ctx.STR().getText())
             elif ctx.ID():
                 return Id(ctx.ID().getText())
+
+        elif ctx.getChildCount() == 2:
+            if ctx.getChild(0).getText() == '-':
+                return BinOp('-', Int(0), ctx.expr(0).accept(self))
                 
         elif ctx.getChildCount() == 3:
             if ctx.getChild(0).getText() == '(':
