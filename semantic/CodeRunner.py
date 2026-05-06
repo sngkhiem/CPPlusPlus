@@ -17,16 +17,16 @@ class CodeRunner():
         config = ctx.config.accept(self)
 
         solPath = config.sol[1:-1]
-        exePath = os.path.abspath(os.path.join(ctx.name, "sol.exe"))
-        print(exePath)
-        os.makedirs(ctx.name, exist_ok=True)
+        subTaskFolder = os.path.join("tests", ctx.name)
+        exePath = os.path.abspath(os.path.join(subTaskFolder,"sol.exe"))
+        os.makedirs(subTaskFolder, exist_ok=True)
         subprocess.run(["g++", solPath, "-o", exePath], check=True)
         
         for i in range(config.tests):
             self.vars = {}
             self.writeInput = []
             self.writeOutput = []
-            folder = os.path.join(ctx.name, f"test{i+1}")
+            folder = os.path.join("tests", ctx.name, f"test{i+1}")
             os.makedirs(folder, exist_ok=True)
             
             ctx.generate.accept(self)
@@ -38,6 +38,8 @@ class CodeRunner():
             outputPath = os.path.join(folder, config.output[1:-1])
             with open(inputPath, "r") as inp, open(outputPath, "w") as out:
                 subprocess.run([exePath], stdin=inp, stdout=out, check=True)
+        
+        os.remove(exePath)
 
     def visitConfig(self, ctx:Config):
         return ctx
@@ -49,7 +51,7 @@ class CodeRunner():
     def visitVar(self, ctx:Var):
         if isinstance(ctx.varType, PrimitiveType):
             if ctx.varType.name == 'int':
-              self.vars[ctx.name] = random.randint(0, 20)
+                self.vars[ctx.name] = random.randint(0, 20)
         elif isinstance(ctx.varType, ArrayType):
             dim = ctx.dims[0].accept(self)
             self.vars[ctx.name] = [random.randint(0, 20) for _ in range(dim)]

@@ -3,8 +3,26 @@ PRIME1 {
         input "input.txt"
         output "output.txt"
         tests 2
-        sol "PRIME1\\sol.cpp"
-        test_sol "wrong.cpp"
+        sol "tests\\sol.cpp" 
+        test_sol "tests\\test_sol.cpp"
+    }
+    generate {
+        var int N;
+        print N;
+        
+        var array<int> A[N];
+        print A;
+    }
+    checker {
+    }
+}
+PRIME2 {
+    config {
+        input "input.txt"
+        output "output.txt"
+        tests 2
+        sol "tests\\sol.cpp"
+        test_sol "tests\\test_sol.cpp"
     }
     generate {
         var int N;
