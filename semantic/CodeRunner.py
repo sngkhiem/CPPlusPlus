@@ -1,45 +1,61 @@
 from semantic.ASTUtils import *
 from functools import reduce
-import math, os, random, subprocess
+import math, os, random, subprocess, shutil
 
 
 class CodeRunner():
     def __init__(self):
-        self.vars = {}
-        self.writeInput = []
-        self.writeOutput = []
+        self.varsType = {}
+        self.writeCpp = []
 
     def visitProgram(self, ctx:Prog):
         for subtask in ctx.subtasks:
             subtask.accept(self)
     
     def visitSubtask(self, ctx:Subtask):
+        self.writeCpp = []
         config = ctx.config.accept(self)
 
-        solPath = config.sol[1:-1]
         subTaskFolder = os.path.join("tests", ctx.name)
-        exePath = os.path.abspath(os.path.join(subTaskFolder,"sol.exe"))
         os.makedirs(subTaskFolder, exist_ok=True)
-        subprocess.run(["g++", solPath, "-o", exePath], check=True)
+
+        solPath = config.sol[1:-1]
+        solExePath = os.path.abspath(os.path.join(subTaskFolder, "sol.exe"))
+        
+        subprocess.run(["g++", solPath, "-o", solExePath], check=True)
+
+        ctx.generate.accept(self)
+
+        genCppPath = os.path.join(subTaskFolder, "gen.cpp")
+        genExePath = os.path.abspath(os.path.join(subTaskFolder, "gen.exe"))
+        cpp = [
+            "#include <bits/stdc++.h>",
+            "using namespace std;",
+            "int main() {",
+            *self.writeCpp,
+            "return 0;",
+            "}",
+        ]        
+        with open(genCppPath, "w") as f:
+            f.write("\n".join(cpp))
         
         for i in range(config.tests):
-            self.vars = {}
-            self.writeInput = []
-            self.writeOutput = []
             folder = os.path.join("tests", ctx.name, f"test{i+1}")
             os.makedirs(folder, exist_ok=True)
-            
-            ctx.generate.accept(self)
 
             inputPath = os.path.join(folder, config.input[1:-1])  
-            with open(inputPath, "w") as f:
-                f.write("\n".join(self.writeInput))
-            
             outputPath = os.path.join(folder, config.output[1:-1])
+
+            subprocess.run(["g++", genCppPath, "-o", genExePath], check=True)
+
+            with open(inputPath, "w") as out:
+                subprocess.run([genExePath], stdout=out, check=True)
+
             with open(inputPath, "r") as inp, open(outputPath, "w") as out:
-                subprocess.run([exePath], stdin=inp, stdout=out, check=True)
-        
-        os.remove(exePath)
+                subprocess.run([solExePath], stdin=inp, stdout=out, check=True)
+
+        os.remove(genExePath)
+        os.remove(solExePath)
 
     def visitConfig(self, ctx:Config):
         return ctx
@@ -49,25 +65,35 @@ class CodeRunner():
             stmt.accept(self)
     
     def visitVar(self, ctx:Var):
+        self.varsType[ctx.name] = ctx.varType
         if isinstance(ctx.varType, PrimitiveType):
             if ctx.varType.name == 'int':
-                self.vars[ctx.name] = random.randint(0, 20)
+                self.writeCpp.append(f"int {ctx.name} = rand() % 21;")
+
         elif isinstance(ctx.varType, ArrayType):
             dim = ctx.dims[0].accept(self)
-            self.vars[ctx.name] = [random.randint(0, 20) for _ in range(dim)]
+            self.writeCpp.append(f"vector<int> {ctx.name};")
+            self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {ctx.name}.push_back(rand() % 21);")
 
 
     def visitPrintStmt(self, ctx: Print):
         for expr in ctx.exprs:
-            value = expr.accept(self)
+            name = expr.accept(self)
+            type = self.varsType[name]
 
-            if isinstance(value, list):
-                self.writeInput.append(" ".join(map(str, value)))
-            else:
-                self.writeInput.append(str(value))
+            if isinstance(type, ArrayType):
+                name = expr.name
+                self.writeCpp.append(
+                    f'for (int i = 0; i < {name}.size(); i++) '
+                    f'{{cout << {name}[i] << " "; }}'
+                )
+                self.writeCpp.append('cout << "\\n";')
+            
+            if isinstance(type, PrimitiveType):
+                self.writeCpp.append(f'cout << {expr.name} << endl;')
 
     def visitId(self, ctx: Id):
-        return self.vars[ctx.name]
+        return ctx.name
 
     def visitIntLit(self, ctx: Int):
         return ctx.value
