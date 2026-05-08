@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+
+tests/**
+!tests/
+!tests/**/
+!tests/**/testcase.txt
+!tests/**/testcase,txt

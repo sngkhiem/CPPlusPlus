@@ -30,6 +30,11 @@ class CodeRunner():
         
         subprocess.run(["g++", solPath, "-o", solExePath], check=True)
 
+        testSolPath = config.testSol[1:-1]
+        testSolExePath = os.path.abspath(os.path.join(subTaskFolder, "test_sol.exe"))
+        
+        subprocess.run(["g++", testSolPath, "-o", testSolExePath], check=True)
+
         ctx.generate.accept(self)
 
         genCppPath = os.path.join(subTaskFolder, "gen.cpp")
@@ -61,6 +66,7 @@ class CodeRunner():
 
             inputPath = os.path.join(folder, config.input[1:-1])  
             outputPath = os.path.join(folder, config.output[1:-1])
+            testOutputPath = os.path.join(folder, "test_sol.out")
 
             with open(inputPath, "w") as out:
                 subprocess.run([genExePath], stdout=out, check=True)
@@ -68,8 +74,21 @@ class CodeRunner():
             with open(inputPath, "r") as inp, open(outputPath, "w") as out:
                 subprocess.run([solExePath], stdin=inp, stdout=out, check=True)
 
+            with open(inputPath, "r") as inp, open(testOutputPath, "w") as out:
+                subprocess.run([testSolExePath], stdin=inp, stdout=out, check=True)
+
+            with open(outputPath, "r") as solOut, open(testOutputPath, "r") as testOut:
+                solTokens = solOut.read().split()
+                testTokens = testOut.read().split()
+
+            if solTokens == testTokens:
+                print(f"{ctx.name} test{i+1}: AC")
+            else:
+                print(f"{ctx.name} test{i+1}: WA")
+
         os.remove(genExePath)
         os.remove(solExePath)
+        os.remove(testSolExePath)
 
     def visitConfig(self, ctx:Config):
         return ctx
@@ -186,6 +205,10 @@ class CodeRunner():
                 self.writeCpp.append(f'}}')
             else:
                 self.writeCpp.append(f'cout << {name} << "\\n";')
+
+    def visitChecker(self, ctx: Checker):
+        for stmt in ctx.stmts:
+            stmt.accept(self)
 
     def visitId(self, ctx: Id):
         return ctx.name
