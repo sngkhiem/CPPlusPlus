@@ -1,0 +1,19 @@
+PRIME1 {
+    config {
+        input "PRIME1.inp"
+        output "PRIME1.out"
+        tests 10
+        sol "tests\\sol.cpp" 
+        test_sol "tests\\test_sol.cpp"
+        compare
+    }
+    generate {
+        var int t range(1, 5);
+        print t;
+
+        repeat(t) {
+            var ll n range(10000000000, 1000000000000000000);
+            print n;
+        }
+    }
+}
