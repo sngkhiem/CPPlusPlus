@@ -21,7 +21,6 @@ class AST(ABC):
 class Expr(AST): pass
 class Type(AST): pass
 class Stmt(AST): pass
-class check(AST): pass
 
 @dataclass
 class PrimitiveType(Type):
@@ -128,34 +127,15 @@ class Loop(Stmt):
         return v.visitLoopStmt(self)
     
 @dataclass
-class Assert(check):
-    condition: Expr
-    msg: Optional[str] 
-    def __str__(self): 
-        msg = f", msg={self.msg}" if self.msg else ""
-        return f"Assert({str(self.condition)}{msg})"
-    def accept(self, v): 
-        return v.visitAssert(self)
-    
-@dataclass
-class CheckRead(check):
-    varType: Type
-    name: str
-    src: str 
-    def __str__(self): 
-        return f"CheckRead({str(self.varType)}, {self.name}, {self.src})"
-    def accept(self, v): 
-        return v.visitCheckRead(self)
-    
-@dataclass
 class Config(AST):
     input: str
     output: str
     tests: int
     sol: Optional[str] = None
     testSol: Optional[str] = None
+    compare: bool = False
     def __str__(self): 
-        return f"Config(in={self.input}, out={self.output}, tests={self.tests}, sol={self.sol}, test_sol={self.testSol})"
+        return f"Config(in={self.input}, out={self.output}, tests={self.tests}, sol={self.sol}, test_sol={self.testSol}, compare={self.compare})"
     def accept(self, v): 
         return v.visitConfig(self)
     
@@ -168,22 +148,12 @@ class Generate(AST):
         return v.visitGenerate(self)
 
 @dataclass
-class Checker(AST):
-    stmts: List[check]
-    def __str__(self): 
-        return f"Checker({printlist(self.stmts)})"
-    def accept(self, v): 
-        return v.visitChecker(self)
-    
-@dataclass
 class Subtask(AST):
     name: str
     config: Config
     generate: Generate
-    checker: Optional[Checker] 
     def __str__(self): 
-        checkerStr = str(self.checker) if self.checker else "None"
-        return f"Subtask({self.name}, {str(self.config)}, {str(self.generate)}, {checkerStr})"
+        return f"Subtask({self.name}, {str(self.config)}, {str(self.generate)})"
     def accept(self, v): 
         return v.visitSubtask(self)
 

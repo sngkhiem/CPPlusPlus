@@ -2,15 +2,15 @@
 using namespace std;
 
 int main() {
-    int N;
-    cin >> N;
-
-    for (int i = 0; i < N; i++) {
+    int n;
+    long long ans = 0;
+    cin >> n;
+    for (int i = 0; i < n; i++) {
         long long x;
         cin >> x;
-        cout << x + 1 << ' ';
+        ans += x;
     }
 
-    cout << endl;
+    cout << ans;
     return 0;
 }

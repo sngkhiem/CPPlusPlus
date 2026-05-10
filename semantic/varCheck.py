@@ -23,9 +23,7 @@ class varCheck:
         elif isinstance(node, Subtask):
             self.vars = set()
             self.dfs(node.generate)
-            if node.checker:
-                self.dfs(node.checker)
-        elif isinstance(node, Generate) or isinstance(node, Checker):
+        elif isinstance(node, Generate):
             for stmt in node.stmts:
                 self.dfs(stmt)
         elif isinstance(node, Var):
@@ -35,11 +33,6 @@ class varCheck:
                 self.errors.append(f"'{node.name}' is already defined.")
             else:
                 self.vars.add(node.name)
-        elif isinstance(node, CheckRead):
-            if node.name in self.vars:
-                self.errors.append(f"'{node.name}' is already defined.")
-            else: 
-                self.vars.add(node.name)
         elif isinstance(node, Print):
             for expr in node.exprs:
                 self.dfs(expr)
@@ -47,8 +40,6 @@ class varCheck:
             self.dfs(node.cnt)
             for stmt in node.stmts:
                 self.dfs(stmt)
-        elif isinstance(node, Assert):
-            self.dfs(node.condition)
         elif isinstance(node, BinOp):
             self.dfs(node.left)
             self.dfs(node.right)

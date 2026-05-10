@@ -2,13 +2,12 @@ grammar CPPP;
 
 program: subtaskBlock+ EOF;
 
-subtaskBlock: subtaskName '{' configBlock genBlock checkerBlock? '}';
+subtaskBlock: subtaskName '{' configBlock genBlock '}';
 
 subtaskName: ID+;
 configBlock: 'config' '{' configItem+ '}';
-configItem: INPUT STR | OUTPUT STR | TESTS NUMBER | SOL STR | TEST_SOL STR;
+configItem: INPUT STR | OUTPUT STR | TESTS NUMBER | SOL STR | TEST_SOL STR | COMPARE;
 genBlock: 'generate' '{' func+ '}';
-checkerBlock: 'checker' '{' check* '}'; 
 
 primitiveType:  INT | FLOAT | DOUBLE | LL | CHAR | STRTYPE;
 dataType: primitiveType | ARRAY '<' dataType '>' | TREE '(' expr ')' | GRAPH '(' expr ',' expr ')';
@@ -18,9 +17,6 @@ var: VAR dataType ID  ('[' expr ']')* option* ';';
 
 printStmt: PRINT expr+ ';';
 loopStmt: 'repeat' '(' expr ')' '{' func* '}';
-
-check: 'assert' '(' expr (',' STR)? ')' ';' | 'var' dataType ID '=' checkRead ';';
-checkRead: 'read_user()' | 'read_ans()' ;
 
 option: ID | RANGE '(' expr ',' expr ')';
 
@@ -45,6 +41,7 @@ OUTPUT: 'output';
 TESTS: 'tests';
 TEST_SOL: 'test_sol';
 SOL: 'sol';
+COMPARE: 'compare';
 RANGE: 'range';
 NUMBER: [0-9]+;
 ID: [a-zA-Z_][a-zA-Z_0-9]*;

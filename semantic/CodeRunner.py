@@ -30,10 +30,13 @@ class CodeRunner():
         
         subprocess.run(["g++", solPath, "-o", solExePath], check=True)
 
-        testSolPath = config.testSol[1:-1]
-        testSolExePath = os.path.abspath(os.path.join(subTaskFolder, "test_sol.exe"))
-        
-        subprocess.run(["g++", testSolPath, "-o", testSolExePath], check=True)
+        testSolExePath = None
+        if config.compare:
+            if not config.testSol:
+                raise ValueError(f"{ctx.name}: compare requires test_sol in config")
+            testSolPath = config.testSol[1:-1]
+            testSolExePath = os.path.abspath(os.path.join(subTaskFolder, "test_sol.exe"))
+            subprocess.run(["g++", testSolPath, "-o", testSolExePath], check=True)
 
         ctx.generate.accept(self)
 
@@ -48,6 +51,12 @@ class CodeRunner():
             "",
             "long long ran(long long l, long long r) {",
             "    return l + (rng() % (r - l + 1));",
+            "}",
+            "",
+            "string randString(long long len) {",
+            "    string s;",
+            "    for(long long i = 0; i < len; i++) s += char('a' + ran(0, 25));",
+            "    return s;",
             "}",
             "",
             "signed main() {",
@@ -66,7 +75,6 @@ class CodeRunner():
 
             inputPath = os.path.join(folder, config.input[1:-1])  
             outputPath = os.path.join(folder, config.output[1:-1])
-            testOutputPath = os.path.join(folder, "test_sol.out")
 
             with open(inputPath, "w") as out:
                 subprocess.run([genExePath], stdout=out, check=True)
@@ -74,21 +82,24 @@ class CodeRunner():
             with open(inputPath, "r") as inp, open(outputPath, "w") as out:
                 subprocess.run([solExePath], stdin=inp, stdout=out, check=True)
 
-            with open(inputPath, "r") as inp, open(testOutputPath, "w") as out:
-                subprocess.run([testSolExePath], stdin=inp, stdout=out, check=True)
+            if config.compare:
+                testOutputPath = os.path.join(folder, "test_sol.out")
+                with open(inputPath, "r") as inp, open(testOutputPath, "w") as out:
+                    subprocess.run([testSolExePath], stdin=inp, stdout=out, check=True)
 
-            with open(outputPath, "r") as solOut, open(testOutputPath, "r") as testOut:
-                solTokens = solOut.read().split()
-                testTokens = testOut.read().split()
+                with open(outputPath, "r") as solOut, open(testOutputPath, "r") as testOut:
+                    solTokens = solOut.read().split()
+                    testTokens = testOut.read().split()
 
-            if solTokens == testTokens:
-                print(f"{ctx.name} test{i+1}: AC")
-            else:
-                print(f"{ctx.name} test{i+1}: WA")
+                if solTokens == testTokens:
+                    print(f"{ctx.name} test{i+1}: AC")
+                else:
+                    print(f"{ctx.name} test{i+1}: WA")
 
         os.remove(genExePath)
         os.remove(solExePath)
-        os.remove(testSolExePath)
+        if testSolExePath:
+            os.remove(testSolExePath)
 
     def visitConfig(self, ctx:Config):
         return ctx
@@ -113,22 +124,47 @@ class CodeRunner():
         self.varsOption[ctx.name] = ctx.options
 
         if isinstance(ctx.varType, PrimitiveType):
-            if ctx.varType.name == 'int':
-                low, high = self.getRange(ctx.options, "1", "20")
+            low, high = self.getRange(ctx.options, "1", "20")
+            if ctx.varType.name == "int":
                 self.writeCpp.append(f"int {ctx.name} = ran({low}, {high});")
+            elif ctx.varType.name == "ll":
+                self.writeCpp.append(f"long long {ctx.name} = ran({low}, {high});")
+            elif ctx.varType.name == "float":
+                self.writeCpp.append(f"float {ctx.name} = (float)ran({low}, {high});")
+            elif ctx.varType.name == "double":
+                self.writeCpp.append(f"double {ctx.name} = (double)ran({low}, {high});")
+            elif ctx.varType.name == "char":
+                low, high = self.getRange(ctx.options, "97", "122")
+                self.writeCpp.append(f"char {ctx.name} = char(ran({low}, {high}));")
+            elif ctx.varType.name == "string":
+                low, high = self.getRange(ctx.options, "1", "10")
+                self.writeCpp.append(f"string {ctx.name} = randString(ran({low}, {high}));")
         elif isinstance(ctx.varType, ArrayType):
             dim = ctx.dims[0].accept(self)
-            low, high = self.getRange(ctx.options, "1", "100")
-            self.writeCpp.append(f"vector<long long> {ctx.name}({dim});")
+            innerType = self.cppType(ctx.varType.inner)
+            value = self.randomValue(ctx.varType.inner, ctx.options)
+            self.writeCpp.append(f"vector<{innerType}> {ctx.name}({dim});")
             if "distinct" in ctx.options or "distince" in ctx.options:
-                poolName = f"pool{ctx.name}"
-                self.writeCpp.append(f"vector<long long> {poolName};")
-                self.writeCpp.append(f"for(long long val = {low}; val <= {high}; val++) {poolName}.push_back(val);")
-                self.writeCpp.append(f"shuffle({poolName}.begin(), {poolName}.end(), rng);")
-                self.writeCpp.append(f"assert((long long){dim} <= (long long){poolName}.size());")
-                self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {ctx.name}[i] = {poolName}[i];")
+                if isinstance(ctx.varType.inner, PrimitiveType) and ctx.varType.inner.name == "string":
+                    usedName = f"used{ctx.name}"
+                    self.writeCpp.append(f"set<string> {usedName};")
+                    self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {{")
+                    self.writeCpp.append(f"    do {{ {ctx.name}[i] = {value}; }} while({usedName}.count({ctx.name}[i]));")
+                    self.writeCpp.append(f"    {usedName}.insert({ctx.name}[i]);")
+                    self.writeCpp.append("}")
+                else:
+                    if isinstance(ctx.varType.inner, PrimitiveType) and ctx.varType.inner.name == "char":
+                        low, high = self.getRange(ctx.options, "97", "122")
+                    else:
+                        low, high = self.getRange(ctx.options, "1", "100")
+                    poolName = f"pool{ctx.name}"
+                    self.writeCpp.append(f"vector<long long> {poolName};")
+                    self.writeCpp.append(f"for(long long val = {low}; val <= {high}; val++) {poolName}.push_back(val);")
+                    self.writeCpp.append(f"shuffle({poolName}.begin(), {poolName}.end(), rng);")
+                    self.writeCpp.append(f"assert((long long){dim} <= (long long){poolName}.size());")
+                    self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {ctx.name}[i] = {self.castValue(ctx.varType.inner, f'{poolName}[i]')};")
             else:
-                self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {ctx.name}[i] = ran({low}, {high});")
+                self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {ctx.name}[i] = {value};")
             if "sorted" in ctx.options:
                 self.writeCpp.append(f"sort({ctx.name}.begin(), {ctx.name}.end());")
         elif isinstance(ctx.varType, TreeType):
@@ -206,10 +242,6 @@ class CodeRunner():
             else:
                 self.writeCpp.append(f'cout << {name} << "\\n";')
 
-    def visitChecker(self, ctx: Checker):
-        for stmt in ctx.stmts:
-            stmt.accept(self)
-
     def visitId(self, ctx: Id):
         return ctx.name
 
@@ -230,3 +262,41 @@ class CodeRunner():
             if match:
                 return match.group(1), match.group(2)
         return lo, hi
+
+    def cppType(self, varType):
+        if isinstance(varType, PrimitiveType):
+            if varType.name == "ll":
+                return "long long"
+            return varType.name
+        return "long long"
+
+    def randomValue(self, varType, options):
+        if not isinstance(varType, PrimitiveType):
+            return "0"
+
+        low, high = self.getRange(options, "1", "100")
+        if varType.name == "int":
+            return f"ran({low}, {high})"
+        if varType.name == "ll":
+            return f"ran({low}, {high})"
+        if varType.name == "float":
+            return f"(float)ran({low}, {high})"
+        if varType.name == "double":
+            return f"(double)ran({low}, {high})"
+        if varType.name == "char":
+            low, high = self.getRange(options, "97", "122")
+            return f"char(ran({low}, {high}))"
+        if varType.name == "string":
+            low, high = self.getRange(options, "1", "10")
+            return f"randString(ran({low}, {high}))"
+        return "0"
+
+    def castValue(self, varType, value):
+        if isinstance(varType, PrimitiveType):
+            if varType.name == "char":
+                return f"char({value})"
+            if varType.name == "float":
+                return f"(float){value}"
+            if varType.name == "double":
+                return f"(double){value}"
+        return value

@@ -1,4 +1,4 @@
-# Generated from ./grammar/CPPP.g4 by ANTLR 4.9.2
+# Generated from .\grammar\CPPP.g4 by ANTLR 4.9.2
 from antlr4 import *
 if __name__ is not None and "." in __name__:
     from .CPPPParser import CPPPParser
@@ -39,11 +39,6 @@ class CPPPVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CPPPParser#checkerBlock.
-    def visitCheckerBlock(self, ctx:CPPPParser.CheckerBlockContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by CPPPParser#primitiveType.
     def visitPrimitiveType(self, ctx:CPPPParser.PrimitiveTypeContext):
         return self.visitChildren(ctx)
@@ -71,16 +66,6 @@ class CPPPVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CPPPParser#loopStmt.
     def visitLoopStmt(self, ctx:CPPPParser.LoopStmtContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by CPPPParser#check.
-    def visitCheck(self, ctx:CPPPParser.CheckContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by CPPPParser#checkRead.
-    def visitCheckRead(self, ctx:CPPPParser.CheckReadContext):
         return self.visitChildren(ctx)
 
 

@@ -11,11 +11,7 @@ class ASTGeneration(CPPPVisitor):
         name = ctx.subtaskName().getText()
         config = ctx.configBlock().accept(self)
         gen = ctx.genBlock().accept(self)
-        if ctx.checkerBlock():
-            checker = ctx.checkerBlock().accept(self)
-        else:
-            checker = None
-        return Subtask(name, config, gen, checker)
+        return Subtask(name, config, gen)
     
     def visitConfigBlock(self, ctx:CPPPParser.ConfigBlockContext):
         input = ""
@@ -23,6 +19,7 @@ class ASTGeneration(CPPPVisitor):
         tests = 1
         sol = None
         testSol = None
+        compare = False
 
         for item in ctx.configItem():
             if item.INPUT():
@@ -35,16 +32,14 @@ class ASTGeneration(CPPPVisitor):
                 sol = item.STR().getText()
             elif item.TEST_SOL():
                 testSol = item.STR().getText()
+            elif item.COMPARE():
+                compare = True
         
-        return Config(input, output, tests, sol, testSol)
+        return Config(input, output, tests, sol, testSol, compare)
     
     def visitGenBlock(self, ctx:CPPPParser.GenBlockContext):
         stmts = [func.accept(self) for func in ctx.func()]
         return Generate(stmts)
-    
-    def visitCheckerBlock(self, ctx: CPPPParser.CheckerBlockContext):
-        checks = [check.accept(self) for check in ctx.check()]
-        return Checker(checks)
     
     def visitDataType(self, ctx: CPPPParser.DataTypeContext):
         if ctx.primitiveType():
@@ -79,22 +74,6 @@ class ASTGeneration(CPPPVisitor):
         stmts = [func.accept(self) for func in ctx.func()]
         return Loop(cnt, stmts)
     
-    def visitCheck(self, ctx: CPPPParser.CheckContext):
-        firstChild = ctx.getChild(0).getText()
-        
-        if firstChild == 'assert':
-            condition = ctx.expr().accept(self)
-            if ctx.STR():
-                msg = ctx.STR().getText()  
-            else: 
-                msg = None
-            return Assert(condition, msg) 
-        elif firstChild == 'var':
-            varType = ctx.dataType().accept(self)
-            name = ctx.ID().getText()
-            source = ctx.checkRead().getText()
-            return CheckRead(varType, name, source)
-        
     def visitExpr(self, ctx: CPPPParser.ExprContext):
         if ctx.getChildCount() == 1:
             if ctx.NUMBER():
