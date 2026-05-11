@@ -6,7 +6,7 @@ subtaskBlock: subtaskName '{' configBlock genBlock '}';
 
 subtaskName: ID+;
 configBlock: 'config' '{' configItem+ '}';
-configItem: INPUT STR | OUTPUT STR | TESTS NUMBER | SOL STR | TEST_SOL STR | COMPARE;
+configItem: INPUT STR | OUTPUT STR | TESTS NUMBER | SOL STR | TEST_SOL STR | compare;
 genBlock: 'generate' '{' func+ '}';
 
 primitiveType:  INT | FLOAT | DOUBLE | LL | CHAR | STRTYPE;
@@ -17,6 +17,8 @@ var: VAR dataType ID  ('[' expr ']')* option* ';';
 
 printStmt: PRINT expr+ ';';
 loopStmt: 'repeat' '(' expr ')' '{' func* '}';
+
+compare: COMPARE expr?;
 
 option: ID | RANGE '(' expr ',' expr ')';
 

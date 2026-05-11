@@ -134,6 +134,7 @@ class Config(AST):
     sol: Optional[str] = None
     testSol: Optional[str] = None
     compare: bool = False
+    timeLimit: Optional[Expr] = None
     def __str__(self): 
         return f"Config(in={self.input}, out={self.output}, tests={self.tests}, sol={self.sol}, test_sol={self.testSol}, compare={self.compare})"
     def accept(self, v): 

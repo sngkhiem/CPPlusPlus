@@ -4,6 +4,8 @@ CP++ is a domain-specific language for competitive programming test generation a
 
 The DSL describes a problem's test configuration and input generation logic in one `.CPPP` file. CP++ parses that file, builds an AST, validates variable usage, generates a C++ test generator, runs the official solution, and optionally runs an alternative solution for comparison.
 
+## System Diagram
+
 ## Environment Setup
 
 ### Prerequisites
@@ -57,7 +59,7 @@ PRIME1 {
         tests 10
         sol "tests/sol.cpp"
         test_sol "tests/test_sol.cpp"
-        compare
+        compare 5000
     }
     generate {
         var int t range(1, 5);
@@ -71,7 +73,7 @@ PRIME1 {
 }
 ```
 
-This creates 10 test folders for `PRIME1`. Each test contains generated input and official output from `sol.cpp`. Because `compare` is present, CP++ also runs `test_sol.cpp` on the same input and compares its output with the official output.
+This creates 10 test folders for `PRIME1`. Each test contains generated input and official output from `sol.cpp`. Because `compare 5000` is present, CP++ also runs `test_sol.cpp` on the same input with a 5000ms time limit, then compares its output with the official output;
 
 ## Grammar Structure
 
@@ -101,7 +103,7 @@ generate {
 - `tests`: number of test cases to generate.
 - `sol`: official C++ solution used to produce expected output.
 - `test_sol`: alternative C++ solution used for comparison.
-- `compare`: optional flag. If present, CP++ runs `test_sol` and compares it against `sol`.
+- `compare`: optional flag. If present, CP++ runs `test_sol` and compares it against `sol` (an optional value after `compare` is used as the time limit in milliseconds.)
 
 Generation statements:
 
@@ -178,8 +180,6 @@ Graph option behavior:
 - Without `weighted`, graph edges are printed as `u v`.
 - For a simple undirected graph, make sure `m <= n * (n - 1) / 2`; otherwise generation may not terminate.
 - For a simple directed graph, make sure `m <= n * (n - 1)`.
-
-## System Diagram
 
 ## Output Structure
 

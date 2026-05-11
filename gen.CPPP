@@ -2,17 +2,17 @@ PRIME1 {
     config {
         input "PRIME1.inp"
         output "PRIME1.out"
-        tests 10
+        tests 2
         sol "tests\\sol.cpp" 
         test_sol "tests\\test_sol.cpp"
-        compare
+        compare 2000
     }
     generate {
         var int t range(1, 5);
         print t;
 
         repeat(t) {
-            var ll n range(10000000000, 1000000000000000000);
+            var ll n range(0, 100);
             print n;
         }
     }

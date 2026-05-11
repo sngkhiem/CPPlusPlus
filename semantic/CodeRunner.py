@@ -1,6 +1,6 @@
 from semantic.ASTUtils import *
 from functools import reduce
-import math, os, random, subprocess, shutil
+import os, subprocess, shutil
 import re
 
 
@@ -10,7 +10,7 @@ class CodeRunner():
         self.varsOption = {}
         self.writeCpp = []
         self.loopIdx = 0
-
+        
     def visitProgram(self, ctx:Prog):
         for subtask in ctx.subtasks:
             subtask.accept(self)
@@ -23,6 +23,10 @@ class CodeRunner():
         config = ctx.config.accept(self)
 
         subTaskFolder = os.path.join("tests", ctx.name)
+
+        if os.path.exists(subTaskFolder):
+            shutil.rmtree(subTaskFolder)
+
         os.makedirs(subTaskFolder, exist_ok=True)
 
         solPath = config.sol[1:-1]
@@ -31,12 +35,16 @@ class CodeRunner():
         subprocess.run(["g++", solPath, "-o", solExePath], check=True)
 
         testSolExePath = None
+        timeLimit = None
         if config.compare:
             if not config.testSol:
                 raise ValueError(f"{ctx.name}: compare requires test_sol in config")
             testSolPath = config.testSol[1:-1]
             testSolExePath = os.path.abspath(os.path.join(subTaskFolder, "test_sol.exe"))
             subprocess.run(["g++", testSolPath, "-o", testSolExePath], check=True)
+            if config.timeLimit:
+                timeLimitMs = config.timeLimit.accept(self)
+                timeLimit = timeLimitMs / 1000
 
         ctx.generate.accept(self)
 
@@ -84,17 +92,27 @@ class CodeRunner():
 
             if config.compare:
                 testOutputPath = os.path.join(folder, "test_sol.out")
-                with open(inputPath, "r") as inp, open(testOutputPath, "w") as out:
-                    subprocess.run([testSolExePath], stdin=inp, stdout=out, check=True)
+                try:
+                    with open(inputPath, "r") as inp, open(testOutputPath, "w") as out:
+                        subprocess.run(
+                            [testSolExePath],
+                            stdin=inp,
+                            stdout=out,
+                            check=True,
+                            timeout=timeLimit
+                        )
+                    with open(outputPath, "r") as solOut, open(testOutputPath, "r") as testOut:
+                        solTokens = solOut.read().split()
+                        testTokens = testOut.read().split()
 
-                with open(outputPath, "r") as solOut, open(testOutputPath, "r") as testOut:
-                    solTokens = solOut.read().split()
-                    testTokens = testOut.read().split()
+                    if solTokens == testTokens:
+                        print(f"{ctx.name} test{i+1}: AC" )
+                    else:
+                        print(f"{ctx.name} test{i+1}: WA")
 
-                if solTokens == testTokens:
-                    print(f"{ctx.name} test{i+1}: AC")
-                else:
-                    print(f"{ctx.name} test{i+1}: WA")
+                except subprocess.TimeoutExpired:
+                    print(f"{ctx.name} test{i+1}: TLE")
+                    continue
 
         os.remove(genExePath)
         os.remove(solExePath)

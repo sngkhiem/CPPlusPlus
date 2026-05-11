@@ -20,6 +20,7 @@ class ASTGeneration(CPPPVisitor):
         sol = None
         testSol = None
         compare = False
+        timeLimit = None
 
         for item in ctx.configItem():
             if item.INPUT():
@@ -32,10 +33,12 @@ class ASTGeneration(CPPPVisitor):
                 sol = item.STR().getText()
             elif item.TEST_SOL():
                 testSol = item.STR().getText()
-            elif item.COMPARE():
+            elif item.compare():
                 compare = True
-        
-        return Config(input, output, tests, sol, testSol, compare)
+                if item.compare().expr():
+                    timeLimit = item.compare().expr().accept(self)
+
+        return Config(input, output, tests, sol, testSol, compare, timeLimit)
     
     def visitGenBlock(self, ctx:CPPPParser.GenBlockContext):
         stmts = [func.accept(self) for func in ctx.func()]

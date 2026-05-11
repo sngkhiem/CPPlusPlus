@@ -1,4 +1,4 @@
-# Generated from .\grammar\CPPP.g4 by ANTLR 4.9.2
+# Generated from ./grammar/CPPP.g4 by ANTLR 4.9.2
 from antlr4 import *
 if __name__ is not None and "." in __name__:
     from .CPPPParser import CPPPParser
@@ -66,6 +66,11 @@ class CPPPVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CPPPParser#loopStmt.
     def visitLoopStmt(self, ctx:CPPPParser.LoopStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CPPPParser#compare.
+    def visitCompare(self, ctx:CPPPParser.CompareContext):
         return self.visitChildren(ctx)
 
 
