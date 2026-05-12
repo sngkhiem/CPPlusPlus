@@ -6,6 +6,8 @@ The DSL describes a problem's test configuration and input generation logic in o
 
 ## System Diagram
 
+![CP++ System Diagram](CPPlusPlus.png)
+
 ## Environment Setup
 
 ### Prerequisites
