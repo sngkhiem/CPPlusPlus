@@ -13,29 +13,8 @@ The DSL describes a problem's test configuration and input generation logic in o
 ### Prerequisites
 
 - Java runtime for ANTLR generation.
-- Anaconda/Minicodna.
-- `g++` for compiling generated C++ files and solution files.
-
-### Installation
-
-1. Clone the repository.
-
-```bash
-git clone https://github.com/sngkhiem/CPPlusPlus
-cd CPPlusPlus
-```
-
-2. Create the environment from `PPL.yml`.
-
-```bash
-conda env create -f PPL.yml
-```
-
-3. Activate the environment.
-
-```bash
-conda activate PPL
-```
+- Python 3.9.
+- C++ compiler.
 
 ## Usage
 
