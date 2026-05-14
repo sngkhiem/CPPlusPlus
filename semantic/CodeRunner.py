@@ -7,6 +7,7 @@ import re
 class CodeRunner():
     def __init__(self):
         self.varsType = {}
+        self.arrayDims = {}
         self.varsOption = {}
         self.writeCpp = []
         self.loopIdx = 0
@@ -18,6 +19,7 @@ class CodeRunner():
     def visitSubtask(self, ctx:Subtask):
         self.writeCpp = []
         self.varsType = {}
+        self.arrayDims = {}        
         self.varsOption = {}
         self.loopIdx = 0
         config = ctx.config.accept(self)
@@ -158,10 +160,23 @@ class CodeRunner():
                 low, high = self.getRange(ctx.options, "1", "10")
                 self.writeCpp.append(f"string {ctx.name} = randString(ran({low}, {high}));")
         elif isinstance(ctx.varType, ArrayType):
-            dim = ctx.dims[0].accept(self)
+            dims = [dim.accept(self) for dim in ctx.dims]
+            self.arrayDims[ctx.name] = dims
+            dim = dims[0]
             innerType = self.cppType(ctx.varType.inner)
             value = self.randomValue(ctx.varType.inner, ctx.options)
-            self.writeCpp.append(f"vector<{innerType}> {ctx.name}({dim});")
+            arrType = innerType
+            arrInit = ""
+            for i in range(len(dims) - 1, -1, -1):
+                arrType = f"vector<{arrType}>"
+
+                if arrInit == "":
+                    arrInit = f"vector<{self.cppType(ctx.varType.inner)}>({dims[i]})"
+                else:
+                    arrInit = f"{arrType}({dims[i]}, {arrInit})"          
+
+            self.writeCpp.append(f"{arrType} {ctx.name} = {arrInit};")
+
             if "distinct" in ctx.options or "distince" in ctx.options:
                 if isinstance(ctx.varType.inner, PrimitiveType) and ctx.varType.inner.name == "string":
                     usedName = f"used{ctx.name}"
@@ -182,7 +197,14 @@ class CodeRunner():
                     self.writeCpp.append(f"assert((long long){dim} <= (long long){poolName}.size());")
                     self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {ctx.name}[i] = {self.castValue(ctx.varType.inner, f'{poolName}[i]')};")
             else:
-                self.writeCpp.append(f"for(int i = 0; i < {dim}; i++) {ctx.name}[i] = {value};")
+                for i in range(len(dims)):
+                    self.writeCpp.append(f"{"    " * i}for(int i{i} = 0; i{i} < {dims[i]}; i{i}++) {{")
+                access = ""
+                for i in range(len(dims)):
+                    access += f"[i{i}]"
+                self.writeCpp.append(f"{"    " * len(dims)}{ctx.name}{access} = {value};")
+                for i in range(len(dims) -1, -1, -1):
+                    self.writeCpp.append(f"{"    " * i}}}")
             if "sorted" in ctx.options:
                 self.writeCpp.append(f"sort({ctx.name}.begin(), {ctx.name}.end());")
         elif isinstance(ctx.varType, TreeType):
@@ -245,7 +267,16 @@ class CodeRunner():
             
             type = self.varsType[name]
             if isinstance(type, ArrayType):
-                self.writeCpp.append(f'for (int i = 0; i < {name}.size(); i++) {{cout << {name}[i] << (i == {name}.size() - 1 ? "" : " "); }}')
+                dims = self.arrayDims[name]
+                for i in range(len(dims)):
+                    self.writeCpp.append(f"{"    " * i}for(int i{i} = 0; i{i} < {dims[i]}; i{i}++) {{")
+                access = ""
+                for i in range(len(dims)):
+                    access += f"[i{i}]"
+                self.writeCpp.append(f'{"    " * len(dims)}cout << {name}{access} << (i{len(dims) - 1} == {name}{access[:-4]}.size() - 1 ? "" : " ");')
+                for i in range(len(dims) -1, -1, -1):
+                    self.writeCpp.append(f"{"    " * i}}}")
+                    self.writeCpp.append(f"{"    " * i}cout << '\\n';")                     
                 self.writeCpp.append('cout << "\\n";')
             elif isinstance(type, TreeType):
                 self.writeCpp.append(f'for (auto& e : {name}) {{ cout << e.first << " " << e.second << "\\n"; }}')
