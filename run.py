@@ -14,7 +14,7 @@ TESTS = os.path.join(DIR, './tests')
 
 def printUsage():
     print('python run.py gen')
-    print('python run.py test')
+    print('python run.py test <file.CPPP>')
 
 
 def printBreak():
@@ -22,79 +22,83 @@ def printBreak():
 
 
 def generateAntlr2Python():
-    print('Antlr4 is running...')
-    subprocess.run(['java', '-jar', ANTLR_JAR, '-o', CPL_Dest, '-no-listener', '-visitor','-Dlanguage=Python3', SRC])
-    print('Generate successfully')
+    #print('Antlr4 is running...')
+    subprocess.run(['java', '-jar', ANTLR_JAR, '-Xexact-output-dir', '-o', CPL_Dest, '-no-listener', '-visitor','-Dlanguage=Python3', SRC])
+    #print('Generate successfully')
 
-def runCode(astTree):    
-    from CodeRunner import CodeRunner
+def printStage(stage, message):
+    print(f"[Stage {stage}] {message}")
+
+def runCode(astTree, context=None):    
+    from semantic.CodeRunner import CodeRunner
     code_runner = CodeRunner()
-    result = astTree.accept(code_runner)
-    
-    print("Result:", result)
+    astTree.accept(code_runner)
 
+def validate(inputFile):
+    if not inputFile.lower().endswith('.cppp'):
+        print(f"Only .CPPP files are accepted ({inputFile})")
+        exit(1)
 
-def runTest():
-    print('Running testcases...')
-       
+    if not os.path.isabs(inputFile):
+        inputFile = os.path.join(DIR, inputFile)
+
+    if not os.path.isfile(inputFile):
+        print(f"Input rejected: file not found ({inputFile})")
+        exit(1)
+
+    return inputFile
+
+def parse(inputFile):
     from CompiledFiles.CPPPLexer import CPPPLexer
     from CompiledFiles.CPPPParser import CPPPParser
     from antlr4.error.ErrorListener import ErrorListener
 
     class CustomErrorListener(ErrorListener):
         def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-            print(f"Input rejected: {msg}")
-            exit(1)  # Exit the program with an error
-
-    filename = 'testcase.txt'
-    inputFile = os.path.join(DIR, './tests', filename)    
+            print(f"Input rejected at line {line}:{column}: {msg}")
+            exit(1)
     
-    # Reset the input stream for parsing and catch the error
     lexer = CPPPLexer(FileStream(inputFile))
     token_stream = CommonTokenStream(lexer)
-
     parser = CPPPParser(token_stream)   
     parser.removeErrorListeners()
     parser.addErrorListener(CustomErrorListener())    
+    return parser.program()
+
+def runTest(inputFile):
+    from semantic.ASTGeneration import ASTGeneration
+    from semantic.varCheck import varCheck, varError
+
+    inputFile = validate(inputFile)
+
+    tree = parse(inputFile)
+
+    ast_generator = ASTGeneration()
+    asttree = tree.accept(ast_generator) 
+
+    check = varCheck()
     try:
-        parser.program()
-        print("Input accepted")
-    except SystemExit:        
-        pass
-    
-    printBreak()
-    print('Run tests completely')
-    
-    
-    
-    input_stream = FileStream(inputFile)
-    lexer = CPPPLexer(input_stream)
-    stream = CommonTokenStream(lexer)
-    parser = CPPPParser(stream)
-    tree = parser.program()  
-    print('Parser tree: ', tree.toStringTree(recog=parser)) 
-    
+        check.check(asttree)
+    except varError as e:
+        print(e)
+        exit(1)   
 
-    # from ASTGeneration import ASTGeneration
-    # ast_generator = ASTGeneration()
-
-    # asttree = tree.accept(ast_generator)    
-    # print('This is ast string: ', asttree)
-    
-    # runCode(asttree)
-    
+    runCode(asttree) 
 
 def main(argv):
-    print('Complete jar file ANTLR  :  ' + str(ANTLR_JAR))
-    print('Length of arguments      :  ' + str(len(argv)))    
-    printBreak()
+    #print('Complete jar file ANTLR  :  ' + str(ANTLR_JAR))
+    #print('Length of arguments      :  ' + str(len(argv)))    
+    #printBreak()
 
     if len(argv) < 1:
         printUsage()
     elif argv[0] == 'gen':
         generateAntlr2Python()    
-    elif argv[0] == 'test':       
-        runTest()
+    elif argv[0] == 'test':
+        if len(argv) < 2:
+            printUsage()
+            exit(1)
+        runTest(argv[1])
     else:
         printUsage()
 

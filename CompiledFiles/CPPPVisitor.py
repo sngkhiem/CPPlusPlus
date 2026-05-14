@@ -29,13 +29,13 @@ class CPPPVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CPPPParser#genBlock.
-    def visitGenBlock(self, ctx:CPPPParser.GenBlockContext):
+    # Visit a parse tree produced by CPPPParser#configItem.
+    def visitConfigItem(self, ctx:CPPPParser.ConfigItemContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CPPPParser#checkerBlock.
-    def visitCheckerBlock(self, ctx:CPPPParser.CheckerBlockContext):
+    # Visit a parse tree produced by CPPPParser#genBlock.
+    def visitGenBlock(self, ctx:CPPPParser.GenBlockContext):
         return self.visitChildren(ctx)
 
 
@@ -49,8 +49,33 @@ class CPPPVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by CPPPParser#func.
+    def visitFunc(self, ctx:CPPPParser.FuncContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by CPPPParser#var.
     def visitVar(self, ctx:CPPPParser.VarContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CPPPParser#printStmt.
+    def visitPrintStmt(self, ctx:CPPPParser.PrintStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CPPPParser#loopStmt.
+    def visitLoopStmt(self, ctx:CPPPParser.LoopStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CPPPParser#compare.
+    def visitCompare(self, ctx:CPPPParser.CompareContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CPPPParser#option.
+    def visitOption(self, ctx:CPPPParser.OptionContext):
         return self.visitChildren(ctx)
 
 
